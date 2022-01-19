@@ -1,15 +1,17 @@
 #![no_std]
 #![allow(non_camel_case_types)]
 
-use {core::ffi::c_void, core::usize};
+use libc::{c_int, c_void, size_t};
 
 #[cfg_attr(
-feature = "cache-friendly",
-deprecated(
-since = "0.2.28",
-note = "Crate `snmalloc-sys` enables cache-friendly feature flag, \
+    feature = "cache-friendly",
+    deprecated(
+        since = "0.2.28",
+        note = "Crate `snmalloc-sys` enables cache-friendly feature flag, \
                 which is deprecated and no longer has any effect. \
-                It may be removed in a future release"))]
+                It may be removed in a future release"
+    )
+)]
 extern "C" {
     /// Allocate the memory with the given alignment and size.
     /// On success, it returns a pointer pointing to the required memory address.
@@ -18,17 +20,17 @@ extern "C" {
     /// - `alignment` is greater than zero
     /// - `alignment` is a power of 2
     /// The program may be forced to abort if the constrains are not full-filled.
-    pub fn rust_alloc(alignment: usize, size: usize) -> *mut c_void;
+    pub fn rust_alloc(alignment: size_t, size: size_t) -> *mut c_void;
 
     /// De-allocate the memory at the given address with the given alignment and size.
     /// The client must assure the following things:
     /// - the memory is acquired using the same allocator and the pointer points to the start position.
     /// - `alignment` and `size` is the same as allocation
     /// The program may be forced to abort if the constrains are not full-filled.
-    pub fn rust_dealloc(ptr: *mut c_void, alignment: usize, size: usize) -> c_void;
+    pub fn rust_dealloc(ptr: *mut c_void, alignment: size_t, size: size_t) -> c_void;
 
     /// Behaves like rust_alloc, but also ensures that the contents are set to zero before being returned.
-    pub fn rust_alloc_zeroed(alignment: usize, size: usize) -> *mut c_void;
+    pub fn rust_alloc_zeroed(alignment: size_t, size: size_t) -> *mut c_void;
 
     /// Re-allocate the memory at the given address with the given alignment and size.
     /// On success, it returns a pointer pointing to the required memory address.
@@ -41,20 +43,20 @@ extern "C" {
     /// The program may be forced to abort if the constrains are not full-filled.
     pub fn rust_realloc(
         ptr: *mut c_void,
-        alignment: usize,
-        old_size: usize,
-        new_size: usize,
+        alignment: size_t,
+        old_size: size_t,
+        new_size: size_t,
     ) -> *mut c_void;
 
     /// Allocate `count` items of `size` length each.
     /// Returns `null` if `count * size` overflows or on out-of-memory.
     /// All items are initialized to zero.
-    pub fn sn_calloc(count: usize, size: usize) -> *mut c_void;
+    pub fn sn_calloc(count: size_t, size: size_t) -> *mut c_void;
 
     /// Allocate `size` bytes.
     /// Returns pointer to the allocated memory or null if out of memory.
     /// Returns a unique pointer if called with `size` 0.
-    pub fn sn_malloc(size: usize) -> *mut c_void;
+    pub fn sn_malloc(size: size_t) -> *mut c_void;
 
     /// Re-allocate memory to `newsize` bytes.
     /// Return pointer to the allocated memory or null if out of memory. If null
@@ -64,14 +66,18 @@ extern "C" {
     /// If `p` is null, it behaves as [`sn_malloc`]. If `newsize` is larger than
     /// the original `size` allocated for `p`, the bytes after `size` are
     /// uninitialized.
-    pub fn sn_realloc(p: *mut c_void, newsize: usize) -> *mut c_void;
+    pub fn sn_realloc(p: *mut c_void, newsize: size_t) -> *mut c_void;
 
     /// Free previously allocated memory.
     /// The pointer `p` must have been allocated before (or be null).
     pub fn sn_free(p: *mut c_void);
 
     /// Return the available bytes in a memory block.
-    pub fn sn_malloc_usable_size(p: *const c_void) -> usize;
+    pub fn sn_malloc_usable_size(p: *const c_void) -> size_t;
+
+    pub fn sn_posix_memalign(memptr: *mut *mut c_void, alignment: size_t, size: size_t) -> c_int;
+
+    pub fn sn_aligned_alloc(alignment: size_t, size: size_t) -> *mut c_void;
 }
 
 #[cfg(test)]
